@@ -2,13 +2,14 @@ use core::fmt;
 use std::path::Path;
 
 pub trait ContainerOptions {
-    //    fn build();
     fn run(
         &self,
         name: &str,
         attach: bool,
         homepath: &Path,
     ) -> Result<std::process::Child, CommonError>;
+
+    fn build(&self, name: &str) -> Result<std::process::Child, CommonError>;
 }
 
 pub enum CommonError {

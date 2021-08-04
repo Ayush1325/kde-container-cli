@@ -1,4 +1,4 @@
-use crate::containers::common;
+use crate::{constants, containers::common, helpers};
 use clap::{AppSettings, Clap};
 use std::{path::Path, process::Command};
 use users;
@@ -48,7 +48,7 @@ impl Podman {
             "--privileged",
             "--name",
             name,
-            "kdepim:dev",
+            constants::DEFAULT_TAG,
         ];
         Self::_exec_command(&args)
     }
@@ -65,6 +65,21 @@ impl Podman {
 
     pub fn exec_container(name: &str) -> Result<std::process::Child, common::CommonError> {
         let args = ["exec", "-it", "-u", "neon", name, "bash"];
+        Self::_exec_command(&args)
+    }
+
+    pub fn remove_container(name: &str) -> Result<std::process::Child, common::CommonError> {
+        let args = ["rm", name];
+        Self::_exec_command(&args)
+    }
+
+    pub fn stop_container(name: &str) -> Result<std::process::Child, common::CommonError> {
+        let args = ["stop", name];
+        Self::_exec_command(&args)
+    }
+
+    pub fn build_container() -> Result<std::process::Child, common::CommonError> {
+        let args = ["build", "--no-cache", "--tag", constants::DEFAULT_TAG, "."];
         Self::_exec_command(&args)
     }
 
@@ -99,5 +114,19 @@ impl common::ContainerOptions for Podman {
                 return Self::run_container(name, homepath);
             }
         }
+    }
+
+    fn build(&self, name: &str) -> Result<std::process::Child, common::CommonError> {
+        if Self::check_container_exists(name)? {
+            let ans = helpers::prompt_y_n(
+                "Do you want to destroy and recreate the existing kdepim:dev container?",
+            )?;
+
+            if ans {
+                Self::stop_container(name)?.wait()?;
+                Self::remove_container(name)?.wait()?;
+            }
+        }
+        Self::build_container()
     }
 }

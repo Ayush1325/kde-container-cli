@@ -24,8 +24,11 @@ enum Action {
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Build {
+    /// Name of container
+    #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
+    name: String,
     /// Enable Nvidia Support.
-    #[clap(short, long)]
+    #[clap(long)]
     nvidia: bool,
     #[clap(subcommand)]
     container: ContainerType,
@@ -65,13 +68,20 @@ impl common::ContainerOptions for ContainerType {
             ContainerType::Podman(x) => x.run(name, attach, homepath),
         }
     }
+
+    fn build(&self, name: &str) -> Result<std::process::Child, common::CommonError> {
+        match self {
+            ContainerType::Docker(_) => todo!(),
+            ContainerType::Podman(x) => x.build(name),
+        }
+    }
 }
 
 pub fn execute() -> Result<std::process::Child, common::CommonError> {
     let opt: Opts = Opts::parse();
 
     match opt.action {
-        Action::Build(_) => todo!(),
+        Action::Build(x) => x.container.build(&x.name),
         Action::Run(x) => x.container.run(&x.name, x.attach, &x.homepath),
     }
 }

@@ -1,24 +1,27 @@
-pub mod cli;
-pub mod constants;
+mod cli;
+mod constants;
 mod containers;
+mod helpers;
 
 fn main() {
+    execute();
+    // test();
+}
+
+fn execute() {
     match cli::execute() {
         Ok(mut x) => {
-            x.wait();
+            if let Err(e) = x.wait() {
+                println!("CLI exited unexpectedly:\n{}", e);
+            }
         }
         Err(e) => {
             println!("{}", e);
         }
     };
-    // test();
 }
 
 fn test() {
-    use std::env;
-    use std::process::Command;
-    use users;
-
-    let uid = users::get_current_uid();
-    println!("{}", uid);
+    let t = helpers::prompt_y_n("Test").unwrap();
+    println!("{}", t);
 }
