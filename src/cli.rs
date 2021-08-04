@@ -1,3 +1,8 @@
+use std::path::{Path, PathBuf};
+
+use crate::constants::DEFAULT_CONTAINER_NAME;
+use crate::containers::common;
+use crate::containers::{common::ContainerOptions, docker::Docker, podman::Podman};
 use clap::{AppSettings, Clap};
 
 /// This is a cli tool to manage containers created for kde development.
@@ -11,19 +16,62 @@ struct Opts {
 
 #[derive(Clap)]
 enum Action {
-    /// Build the container image
-    Build,
-    /// Run the kdepim container.
-    /// Creates a new container if it does not already exist.
-    Run,
+    Build(Build),
+    Run(Run),
+}
+
+/// Build the container image
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Build {
+    /// Enable Nvidia Support.
+    #[clap(short, long)]
+    nvidia: bool,
+    #[clap(subcommand)]
+    container: ContainerType,
+}
+
+/// Run the kdepim container.
+/// Creates a new container if it does not already exist.
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Run {
+    homepath: PathBuf,
+    /// Name of container
+    #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
+    name: String,
+    /// Attach to a running Container
+    #[clap(short, long)]
+    attach: bool,
+    #[clap(subcommand)]
+    container: ContainerType,
 }
 
 #[derive(Clap)]
 enum ContainerType {
-    Docker,
-    Podman,
+    Docker(Docker),
+    Podman(Podman),
 }
 
-pub fn execute() {
-    let opt = Opts::parse();
+impl common::ContainerOptions for ContainerType {
+    fn run(
+        &self,
+        name: &str,
+        attach: bool,
+        homepath: &Path,
+    ) -> Result<std::process::Child, common::CommonError> {
+        match self {
+            ContainerType::Docker(_) => todo!(),
+            ContainerType::Podman(x) => x.run(name, attach, homepath),
+        }
+    }
+}
+
+pub fn execute() -> Result<std::process::Child, common::CommonError> {
+    let opt: Opts = Opts::parse();
+
+    match opt.action {
+        Action::Build(_) => todo!(),
+        Action::Run(x) => x.container.run(&x.name, x.attach, &x.homepath),
+    }
 }

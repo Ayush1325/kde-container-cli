@@ -8,7 +8,7 @@ RUN apt-get update && apt-get dist-upgrade -y
 # Setup environment for NVIDIA
 LABEL com.nvidia.volumes.needed="nvidia_driver"
 RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
-    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+  echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
 ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
 ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
 
@@ -106,7 +106,7 @@ RUN echo 'source /home/neon/.start-iceccd.sh\n' >> ~/.bashrc
 
 # Make the ccache bigger (the default 5G is not enough for PIM)
 RUN mkdir /home/neon/kdepim/.ccache \
-    && echo 'max_size = 10.0G' > /home/neon/kdepim/.ccache/ccache.conf
+  && echo 'max_size = 10.0G' > /home/neon/kdepim/.ccache/ccache.conf
 
 # Copy init.sh and start it
 COPY init.sh /usr/local/bin/init.sh
