@@ -12,4 +12,4 @@ Rust is a fast and great language, but more importantly, it produces binaries wh
 Golang might have been a good choice too but I am just more familiar with Rust.
 
 # Special Thanks
-- Daniel Vrátil: For Creating the Dockerfile.
+- Daniel Vrátil: For kdepim docker scripts.

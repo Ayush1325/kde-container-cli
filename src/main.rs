@@ -10,16 +10,9 @@ fn main() {
 }
 
 fn execute() {
-    match cli::execute() {
-        Ok(mut x) => {
-            if let Err(e) = x.wait() {
-                println!("CLI exited unexpectedly:\n{}", e);
-            }
-        }
-        Err(e) => {
-            println!("{}", e);
-        }
-    };
+    if let Err(e) = cli::execute() {
+        println!("{}", e);
+    }
 }
 
 #[cfg(debug_assertions)]

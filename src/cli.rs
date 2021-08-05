@@ -1,6 +1,8 @@
 use crate::common_errors::CommonError;
 use crate::constants::DEFAULT_CONTAINER_NAME;
-use crate::containers::{common::ContainerOptions, docker::Docker, podman::Podman};
+use crate::containers::{
+    common::ContainerOptions, configs::Config, docker::Docker, podman::Podman,
+};
 use clap::{AppSettings, Clap};
 use std::path::{Path, PathBuf};
 use std::process::Child;
@@ -18,6 +20,7 @@ struct Opts {
 enum Action {
     Build(Build),
     Run(Run),
+    Config(Config),
 }
 
 /// Build the container image
@@ -69,11 +72,18 @@ impl ContainerOptions for ContainerType {
     }
 }
 
-pub fn execute() -> Result<Child, CommonError> {
+pub fn execute() -> Result<(), CommonError> {
     let opt: Opts = Opts::parse();
 
     match opt.action {
-        Action::Build(x) => x.container.build(&x.name),
-        Action::Run(x) => x.container.run(&x.name, x.attach, &x.homepath),
-    }
+        Action::Build(x) => {
+            x.container.build(&x.name)?.wait()?;
+        }
+        Action::Run(x) => {
+            x.container.run(&x.name, x.attach, &x.homepath)?.wait()?;
+        }
+        Action::Config(x) => x.execute()?,
+    };
+
+    Ok(())
 }
