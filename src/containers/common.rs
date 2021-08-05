@@ -13,16 +13,9 @@ pub trait ContainerOptions {
 }
 
 pub enum CommonError {
-    RegexError(regex::Error),
     StdioParseError(std::string::FromUtf8Error),
     CommandExecuteError(CommandExecuteError),
     IOError(std::io::Error),
-}
-
-impl From<regex::Error> for CommonError {
-    fn from(e: regex::Error) -> Self {
-        Self::RegexError(e)
-    }
 }
 
 impl From<std::string::FromUtf8Error> for CommonError {
@@ -46,7 +39,6 @@ impl From<CommandExecuteError> for CommonError {
 impl fmt::Display for CommonError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CommonError::RegexError(e) => write!(f, "Regex Error:\n{}", e),
             CommonError::StdioParseError(e) => write!(f, "Error in parsing STDIO:\n{}", e),
             CommonError::CommandExecuteError(e) => write!(f, "Error in executing command:\n{}", e),
             CommonError::IOError(e) => write!(f, "IO Error:\n{}", e),

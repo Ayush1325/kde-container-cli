@@ -1,9 +1,9 @@
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 
 pub fn prompt_y_n(msg: &str) -> Result<bool, io::Error> {
     loop {
         print!("{} [y/n] ", msg);
-        io::stdout().flush();
+        io::stdout().flush()?;
         let mut inp = String::new();
         io::stdin().read_line(&mut inp)?;
         match inp.trim() {

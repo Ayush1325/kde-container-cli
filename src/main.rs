@@ -21,6 +21,7 @@ fn execute() {
     };
 }
 
+#[cfg(debug_assertions)]
 fn test() {
     let t = helpers::prompt_y_n("Test").unwrap();
     println!("{}", t);

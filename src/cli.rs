@@ -27,9 +27,6 @@ struct Build {
     /// Name of container
     #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
     name: String,
-    /// Enable Nvidia Support.
-    #[clap(long)]
-    nvidia: bool,
     #[clap(subcommand)]
     container: ContainerType,
 }
@@ -64,14 +61,14 @@ impl common::ContainerOptions for ContainerType {
         homepath: &Path,
     ) -> Result<std::process::Child, common::CommonError> {
         match self {
-            ContainerType::Docker(_) => todo!(),
+            ContainerType::Docker(x) => x.run(name, attach, homepath),
             ContainerType::Podman(x) => x.run(name, attach, homepath),
         }
     }
 
     fn build(&self, name: &str) -> Result<std::process::Child, common::CommonError> {
         match self {
-            ContainerType::Docker(_) => todo!(),
+            ContainerType::Docker(x) => x.build(name),
             ContainerType::Podman(x) => x.build(name),
         }
     }
