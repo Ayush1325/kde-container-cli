@@ -6,4 +6,6 @@ pub trait ContainerOptions {
         -> Result<process::Child, CommonError>;
 
     fn build(&self, name: &str) -> Result<process::Child, CommonError>;
+
+    fn launch_gui(&self, name: &str, application: &str) -> Result<process::Child, CommonError>;
 }

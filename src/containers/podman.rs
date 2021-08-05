@@ -51,8 +51,13 @@ impl Podman {
         Self::_exec_command(&args)
     }
 
-    pub fn start_container(name: &str) -> Result<Child, CommonError> {
+    pub fn start_attached_container(name: &str) -> Result<Child, CommonError> {
         let args = ["start", "-ai", name];
+        Self::_exec_command(&args)
+    }
+
+    pub fn start_detached_container(name: &str) -> Result<Child, CommonError> {
+        let args = ["start", name];
         Self::_exec_command(&args)
     }
 
@@ -63,6 +68,11 @@ impl Podman {
 
     pub fn exec_container(name: &str) -> Result<Child, CommonError> {
         let args = ["exec", "-it", "-u", "neon", name, "bash"];
+        Self::_exec_command(&args)
+    }
+
+    pub fn lauch_in_container(name: &str, application: &str) -> Result<Child, CommonError> {
+        let args = ["exec", "-d", "-u", "neon", name, application];
         Self::_exec_command(&args)
     }
 
@@ -102,7 +112,7 @@ impl common::ContainerOptions for Podman {
             }
         } else {
             if Self::check_container_exists(name)? {
-                return Self::start_container(name);
+                return Self::start_attached_container(name);
             } else {
                 return Self::run_container(name, homepath);
             }
@@ -121,5 +131,16 @@ impl common::ContainerOptions for Podman {
             }
         }
         Self::build_container()
+    }
+
+    fn launch_gui(
+        &self,
+        name: &str,
+        application: &str,
+    ) -> Result<std::process::Child, CommonError> {
+        if !Self::check_container_running(name)? {
+            Self::start_detached_container(name)?.wait()?;
+        }
+        Self::lauch_in_container(name, application)
     }
 }

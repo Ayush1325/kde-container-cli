@@ -21,6 +21,7 @@ enum Action {
     Build(Build),
     Run(Run),
     Config(Config),
+    Launch(Launch),
 }
 
 /// Build the container image
@@ -50,6 +51,19 @@ struct Run {
     container: ContainerType,
 }
 
+/// Launch GUI application inside container.
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Launch {
+    /// Application to Launch
+    application: String,
+    /// Name of container
+    #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
+    name: String,
+    #[clap(subcommand)]
+    container: ContainerType,
+}
+
 #[derive(Clap)]
 enum ContainerType {
     Docker(Docker),
@@ -70,6 +84,17 @@ impl ContainerOptions for ContainerType {
             ContainerType::Podman(x) => x.build(name),
         }
     }
+
+    fn launch_gui(
+        &self,
+        name: &str,
+        application: &str,
+    ) -> Result<std::process::Child, CommonError> {
+        match self {
+            ContainerType::Docker(x) => x.launch_gui(name, application),
+            ContainerType::Podman(x) => x.launch_gui(name, application),
+        }
+    }
 }
 
 pub fn execute() -> Result<(), CommonError> {
@@ -83,6 +108,9 @@ pub fn execute() -> Result<(), CommonError> {
             x.container.run(&x.name, x.attach, &x.homepath)?.wait()?;
         }
         Action::Config(x) => x.execute()?,
+        Action::Launch(x) => {
+            x.container.launch_gui(&x.name, &x.application)?.wait()?;
+        }
     };
 
     Ok(())
