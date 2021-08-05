@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
-
+use crate::common_errors::CommonError;
 use crate::constants::DEFAULT_CONTAINER_NAME;
-use crate::containers::common;
 use crate::containers::{common::ContainerOptions, docker::Docker, podman::Podman};
 use clap::{AppSettings, Clap};
+use std::path::{Path, PathBuf};
+use std::process::Child;
 
 /// This is a cli tool to manage containers created for kde development.
 #[derive(Clap)]
@@ -53,20 +53,15 @@ enum ContainerType {
     Podman(Podman),
 }
 
-impl common::ContainerOptions for ContainerType {
-    fn run(
-        &self,
-        name: &str,
-        attach: bool,
-        homepath: &Path,
-    ) -> Result<std::process::Child, common::CommonError> {
+impl ContainerOptions for ContainerType {
+    fn run(&self, name: &str, attach: bool, homepath: &Path) -> Result<Child, CommonError> {
         match self {
             ContainerType::Docker(x) => x.run(name, attach, homepath),
             ContainerType::Podman(x) => x.run(name, attach, homepath),
         }
     }
 
-    fn build(&self, name: &str) -> Result<std::process::Child, common::CommonError> {
+    fn build(&self, name: &str) -> Result<Child, CommonError> {
         match self {
             ContainerType::Docker(x) => x.build(name),
             ContainerType::Podman(x) => x.build(name),
@@ -74,7 +69,7 @@ impl common::ContainerOptions for ContainerType {
     }
 }
 
-pub fn execute() -> Result<std::process::Child, common::CommonError> {
+pub fn execute() -> Result<Child, CommonError> {
     let opt: Opts = Opts::parse();
 
     match opt.action {

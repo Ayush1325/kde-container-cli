@@ -1,4 +1,5 @@
 mod cli;
+mod common_errors;
 mod constants;
 mod containers;
 mod helpers;

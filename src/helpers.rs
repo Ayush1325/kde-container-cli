@@ -13,3 +13,8 @@ pub fn prompt_y_n(msg: &str) -> Result<bool, io::Error> {
         }
     }
 }
+
+pub fn command_to_string(command: &str, args: &[&str]) -> String {
+    let combined_args = args.join(" ");
+    format!("{} {}", command, combined_args)
+}
