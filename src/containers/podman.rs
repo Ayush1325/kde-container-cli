@@ -165,6 +165,8 @@ impl common::ContainerOptions for Podman {
             if ans {
                 Self::stop_container(name)?.wait()?;
                 Self::remove_container(name)?.wait()?;
+            } else {
+                return Err(CommonError::EarlyExit(String::from("")));
             }
         }
         Self::build_container(nvidia)
