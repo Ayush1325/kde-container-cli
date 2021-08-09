@@ -1,0 +1,31 @@
+name: Deploy
+
+# Controls when the workflow will run
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build on Linux
+        env:
+            TARGET: x86_64-unknown-linux-musl
+        run: | 
+          rustup target add $TARGET
+          cargo build --release --target $TARGET --verbose
+          mkdir -p release/kde_container_cli
+          mv target/x86_64-unknown-linux-musl/release/kde_container_cli ./release/kde_container_cli/kde_container_cli
+          cp -r assets/* ./release/kde_container_cli/
+          tar -C ./release/ -czvf ./release/kde_container_cli.tar.gz ./kde_container_cli/
+      
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          files: |
+            ./release/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
