@@ -31,6 +31,9 @@ struct Build {
     /// Name of container
     #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
     name: String,
+    /// Build Image with Nvidia Support
+    #[clap(long)]
+    nvidia: bool,
     #[clap(subcommand)]
     container: ContainerType,
 }
@@ -47,6 +50,9 @@ struct Run {
     /// Attach to a running Container
     #[clap(short, long)]
     attach: bool,
+    /// Nvidia Support
+    #[clap(long)]
+    nvidia: bool,
     #[clap(subcommand)]
     container: ContainerType,
 }
@@ -71,17 +77,23 @@ enum ContainerType {
 }
 
 impl ContainerOptions for ContainerType {
-    fn run(&self, name: &str, attach: bool, homepath: &Path) -> Result<Child, CommonError> {
+    fn run(
+        &self,
+        name: &str,
+        attach: bool,
+        homepath: &Path,
+        nvidia: bool,
+    ) -> Result<Child, CommonError> {
         match self {
-            ContainerType::Docker(x) => x.run(name, attach, homepath),
-            ContainerType::Podman(x) => x.run(name, attach, homepath),
+            ContainerType::Docker(x) => x.run(name, attach, homepath, nvidia),
+            ContainerType::Podman(x) => x.run(name, attach, homepath, nvidia),
         }
     }
 
-    fn build(&self, name: &str) -> Result<Child, CommonError> {
+    fn build(&self, name: &str, nvidia: bool) -> Result<Child, CommonError> {
         match self {
-            ContainerType::Docker(x) => x.build(name),
-            ContainerType::Podman(x) => x.build(name),
+            ContainerType::Docker(x) => x.build(name, nvidia),
+            ContainerType::Podman(x) => x.build(name, nvidia),
         }
     }
 
@@ -102,10 +114,12 @@ pub fn execute() -> Result<(), CommonError> {
 
     match opt.action {
         Action::Build(x) => {
-            x.container.build(&x.name)?.wait()?;
+            x.container.build(&x.name, x.nvidia)?.wait()?;
         }
         Action::Run(x) => {
-            x.container.run(&x.name, x.attach, &x.homepath)?.wait()?;
+            x.container
+                .run(&x.name, x.attach, &x.homepath, x.nvidia)?
+                .wait()?;
         }
         Action::Config(x) => x.execute()?,
         Action::Launch(x) => {

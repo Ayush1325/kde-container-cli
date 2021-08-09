@@ -28,25 +28,36 @@ impl Docker {
         Ok(command)
     }
 
-    pub fn run_container(name: &str, homepath: &Path) -> Result<Child, CommonError> {
-        let args = [
-            "run",
+    pub fn run_container(name: &str, homepath: &Path, nvidia: bool) -> Result<Child, CommonError> {
+        let pulse_mount = format!(
+            "-v=/run/user/{}/pulse:/run/user/1000/pulse",
+            users::get_current_uid()
+        );
+        let home_mount = format!("-v={}:/home/neon/kdepim", homepath.display());
+
+        let mut args = vec!["run"];
+
+        if nvidia {
+            args.extend_from_slice(&["--gpus", "all"]);
+        } else {
+            args.push("--privileged");
+        }
+
+        args.extend_from_slice(&[
             "-ti",
+            "--net=host",
             "-e",
             "DISPLAY",
             "-e",
             "ICECC_SERVER",
             "-v=/tmp/.X11-unix:/tmp/.X11-unix",
-            &format!(
-                "-v=/run/user/{}/pulse:/run/user/1000/pulse:rw,z",
-                users::get_current_uid()
-            ),
-            &format!("-v={}:/home/neon/kdepim:rw,z", homepath.display()),
-            "--privileged",
+            &pulse_mount,
+            &home_mount,
             "--name",
             name,
             constants::DEFAULT_TAG,
-        ];
+        ]);
+
         Self::_exec_command(&args)
     }
 
@@ -85,8 +96,26 @@ impl Docker {
         Self::_exec_command(&args)
     }
 
-    pub fn build_container() -> Result<Child, CommonError> {
-        let args = ["build", "--no-cache", "--tag", constants::DEFAULT_TAG, "."];
+    pub fn build_container(nvidia: bool) -> Result<Child, CommonError> {
+        let args = if nvidia {
+            [
+                "build",
+                "--no-cache",
+                "--tag",
+                constants::DEFAULT_TAG,
+                "-f",
+                constants::DOCKERFILE_NVIDIA,
+            ]
+        } else {
+            [
+                "build",
+                "--no-cache",
+                "--tag",
+                constants::DEFAULT_TAG,
+                "-f",
+                constants::DOCKERFILE_NORMAL,
+            ]
+        };
         Self::_exec_command(&args)
     }
 
@@ -102,7 +131,13 @@ impl Docker {
 }
 
 impl common::ContainerOptions for Docker {
-    fn run(&self, name: &str, attach: bool, homepath: &Path) -> Result<Child, CommonError> {
+    fn run(
+        &self,
+        name: &str,
+        attach: bool,
+        homepath: &Path,
+        nvidia: bool,
+    ) -> Result<Child, CommonError> {
         if Self::check_container_running(name)? {
             if attach {
                 return Self::attach_container(name);
@@ -113,12 +148,12 @@ impl common::ContainerOptions for Docker {
             if Self::check_container_exists(name)? {
                 return Self::start_attached_container(name);
             } else {
-                return Self::run_container(name, homepath);
+                return Self::run_container(name, homepath, nvidia);
             }
         }
     }
 
-    fn build(&self, name: &str) -> Result<Child, CommonError> {
+    fn build(&self, name: &str, nvidia: bool) -> Result<Child, CommonError> {
         if Self::check_container_exists(name)? {
             let ans = helpers::prompt_y_n(
                 "Do you want to destroy and recreate the existing kdepim:dev container?",
@@ -129,7 +164,7 @@ impl common::ContainerOptions for Docker {
                 Self::remove_container(name)?.wait()?;
             }
         }
-        Self::build_container()
+        Self::build_container(nvidia)
     }
 
     fn launch_gui(
