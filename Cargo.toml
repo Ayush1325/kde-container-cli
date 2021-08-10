@@ -1,6 +1,6 @@
 [package]
 name = "kde_container_cli"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 authors = ["Ayush Singh <ayushsingh1325@gmail.com>"]
 license-file = "LICENSE.txt"
