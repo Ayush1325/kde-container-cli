@@ -2,6 +2,9 @@
 name = "kde_container_cli"
 version = "0.1.0"
 edition = "2018"
+authors = ["Ayush Singh <ayushsingh1325@gmail.com>"]
+license-file = "LICENSE.txt"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
