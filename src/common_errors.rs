@@ -31,7 +31,7 @@ impl fmt::Display for CommonError {
             CommonError::StdioParseError(e) => write!(f, "Error in parsing STDIO:\n{}", e),
             CommonError::CommandExecuteError(e) => write!(f, "Error in executing command:\n{}", e),
             CommonError::IOError(e) => write!(f, "IO Error:\n{}", e),
-            CommonError::EarlyExit(e) => write!(f, "Exiting: ", e),
+            CommonError::EarlyExit(e) => write!(f, "Exiting:\n{}", e),
         }
     }
 }
