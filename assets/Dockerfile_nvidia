@@ -1,4 +1,4 @@
-FROM kdeneon/plasma:unstable as base
+FROM docker.io/kdeneon/plasma:unstable as base
 MAINTAINER Daniel Vrátil <dvratil@kde.org>
 
 USER root

@@ -19,7 +19,8 @@ struct Opts {
 #[derive(Clap)]
 enum Action {
     Build(Build),
-    Run(Run),
+    Create(Create),
+    Enter(Enter),
     Config(Config),
     Launch(Launch),
 }
@@ -42,17 +43,28 @@ struct Build {
 /// Creates a new container if it does not already exist.
 #[derive(Clap)]
 #[clap(setting = AppSettings::ColoredHelp)]
-struct Run {
+struct Create {
     homepath: PathBuf,
+    /// Name of container
+    #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
+    name: String,
+    /// Nvidia Support
+    #[clap(long)]
+    nvidia: bool,
+    #[clap(subcommand)]
+    container: ContainerType,
+}
+
+/// Enter the kdepim container.
+#[derive(Clap)]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Enter {
     /// Name of container
     #[clap(short, long, default_value = DEFAULT_CONTAINER_NAME)]
     name: String,
     /// Attach to a running Container
     #[clap(short, long)]
     attach: bool,
-    /// Nvidia Support
-    #[clap(long)]
-    nvidia: bool,
     #[clap(subcommand)]
     container: ContainerType,
 }
@@ -77,17 +89,23 @@ enum ContainerType {
 }
 
 impl ContainerOptions for ContainerType {
-    fn run(
+    fn create(
         &self,
         name: &str,
-        attach: bool,
         homepath: &Path,
         nvidia: bool,
     ) -> Result<Child, CommonError> {
         match self {
-            ContainerType::Docker(x) => x.run(name, attach, homepath, nvidia),
-            ContainerType::Podman(x) => x.run(name, attach, homepath, nvidia),
+            ContainerType::Docker(x) => x.create(name, homepath, nvidia),
+            ContainerType::Podman(x) => x.create(name, homepath, nvidia),
         }
+    }
+
+    fn enter(&self, name: &str, attach: bool) -> Result<Child, CommonError> {
+	match self {
+            ContainerType::Docker(x) => x.enter(name, attach),
+            ContainerType::Podman(x) => x.enter(name, attach),
+	}
     }
 
     fn build(&self, name: &str, nvidia: bool) -> Result<Child, CommonError> {
@@ -116,11 +134,14 @@ pub fn execute() -> Result<(), CommonError> {
         Action::Build(x) => {
             x.container.build(&x.name, x.nvidia)?.wait()?;
         }
-        Action::Run(x) => {
+        Action::Create(x) => {
             x.container
-                .run(&x.name, x.attach, &x.homepath, x.nvidia)?
+                .create(&x.name, &x.homepath, x.nvidia)?
                 .wait()?;
-        }
+        },
+	Action::Enter(x) => {
+	    x.container.enter(&x.name, x.attach)?.wait()?;
+	},
         Action::Config(x) => x.execute()?,
         Action::Launch(x) => {
             x.container.launch_gui(&x.name, &x.application)?.wait()?;

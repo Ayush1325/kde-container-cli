@@ -28,7 +28,11 @@ impl Podman {
         Ok(command)
     }
 
-    pub fn run_container(name: &str, homepath: &Path, nvidia: bool) -> Result<Child, CommonError> {
+    pub fn create_container(
+        name: &str,
+        homepath: &Path,
+        nvidia: bool,
+    ) -> Result<Child, CommonError> {
         let pulse_mount = format!(
             "-v=/run/user/{}/pulse:/run/user/1000/pulse",
             users::get_current_uid()
@@ -134,24 +138,24 @@ impl Podman {
 }
 
 impl common::ContainerOptions for Podman {
-    fn run(
-        &self,
-        name: &str,
-        attach: bool,
-        homepath: &Path,
-        nvidia: bool,
-    ) -> Result<Child, CommonError> {
+    fn create(&self, name: &str, homepath: &Path, nvidia: bool) -> Result<Child, CommonError> {
+        Self::create_container(name, homepath, nvidia)
+    }
+
+    fn enter(&self, name: &str, attach: bool) -> Result<Child, CommonError> {
         if Self::check_container_running(name)? {
             if attach {
-                return Self::attach_container(name);
+                Self::attach_container(name)
             } else {
-                return Self::exec_container(name);
+                Self::exec_container(name)
             }
         } else {
             if Self::check_container_exists(name)? {
-                return Self::start_attached_container(name);
+                Self::start_attached_container(name)
             } else {
-                return Self::run_container(name, homepath, nvidia);
+                Err(CommonError::EarlyExit(
+                    "Contaner Does not Exist".to_string(),
+                ))
             }
         }
     }
